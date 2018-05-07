@@ -36,7 +36,9 @@ class Header extends React.Component {
   render(){
     return(
       <div className="header">
-        <CenterContent test={Logo}/>
+        <CenterContent>
+          <Logo/>
+        </CenterContent>
       </div>
     );
   }
@@ -45,7 +47,7 @@ class Header extends React.Component {
 class Logo extends React.Component {
   render(){
     return(
-      <div className="logo"></div>
+      <div className="logo"/>
     );
   }
 }
@@ -53,8 +55,39 @@ class Logo extends React.Component {
 class NavBar extends React.Component {
   render(){
     return(
-      <span>Temp</span>
+      <div>
+        <NavBarMenu/>
+        <NavBarTrim/>
+        <NavBarTriangles/>
+      </div>
     );
+  }
+}
+
+class NavBarMenu extends React.Component {
+  render(){
+    return(
+      <div className="nav-bar">
+        <CenterContent>
+          <div className="nav-link active">Forum</div>
+          <div className="nav-link       ">Members</div>
+          <div className="nav-link       ">TBD</div>
+          <div className="nav-link view-new-content">View New Content</div>
+        </CenterContent>
+      </div>
+    );
+  }
+}
+
+class NavBarTrim extends React.Component {
+  render(){
+    return <div className="nav-bar-trim"/>
+  }
+}
+
+class NavBarTriangles extends React.Component {
+  render(){
+    return <div className="triangles"/>
   }
 }
 
@@ -67,19 +100,15 @@ class MainForum extends React.Component {
 }
 
 class CenterContent extends React.Component {
-
   render(){
-    let Qwe = this.props.test;
-    console.log(Qwe);
-
     return(
       <div className="center-content">
-        {Qwe}
+        {this.props.children}
       </div>
     );
   }
 }
 
 ReactDOM.render(
-  <Application />, document.getElementById("root")
+  <Application/>, document.getElementById("root")
 );
