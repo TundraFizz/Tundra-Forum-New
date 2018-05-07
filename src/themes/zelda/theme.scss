@@ -36,7 +36,6 @@ a:hover {
 }
 
 .center-content{
-/*.main-width {*/
   margin: auto;
   width: 70%;
   min-width: 830px;
@@ -48,6 +47,56 @@ a:hover {
   background-position: center;
   background-color: #2e8342;
   height: 140px;
+
+  .bar {
+    background: rgba(0,0,0,0.8);
+    line-height: 26px;
+    height: 26px;
+    box-shadow: 0px 0px 1px rgba(255,255,255,0.5);
+    float: right;
+    width: auto;
+    padding: 0 10px;
+    -moz-border-radius: 0 0 5px 5px;
+    -webkit-border-radius: 0 0 5px 5px;
+    border-radius: 0 0 5px 5px;
+    color: #8a8a8a;
+    font-size: 12px;
+    font-weight: bold;
+
+    ul {
+      display: inline-block;
+      margin: 0;
+      padding: 0;
+
+      li {
+        display: inline-block;
+        /*padding-right: 4px;*/
+      }
+
+      li:not(.seperator):hover {
+        color: #ffffff;
+        cursor: pointer;
+      }
+
+      li.mail {
+        padding-right: 8px;
+        background-image: url(img/icon-mail-1.png);
+      }
+
+      li.notifications {
+        padding-right: 8px;
+      }
+
+      li.seperator {
+        cursor: default;
+        padding: 0 8px;
+      }
+
+      li.seperator:after {
+        content: "|";
+      }
+    }
+  }
 
   .logo {
     background-image: url(img/logo.png);
@@ -210,7 +259,8 @@ a:hover {
         align-items: center;
         width: 50px;
 
-        div {
+        .icon-bg {
+          background-image: url("img/board-unread.png");
           background-repeat: no-repeat;
           background-position: center;
           background-size: contain;
