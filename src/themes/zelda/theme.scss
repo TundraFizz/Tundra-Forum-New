@@ -1,10 +1,28 @@
 body {
+  margin: 0;
+  min-height: 100%;
+}
+
+/*div#root > div {*/
+#root2 {
   position: relative;
   display: block;
   background-image: url("img/bg-light.png");
   font: normal 14px helvetica, arial, sans-serif;
-  padding-bottom: 210px; /* Make sure that the footer gets pushed to the bottom */
   margin: 0;
+  min-height: 100vh;
+
+  /*
+    Make sure that the footer gets pushed to the bottom
+    This padding-bottom used to be used in order to make sure that
+    the footer got pushed to the bottom. I can no longer use
+    padding-bottom because I'm using min-height=100vh, and the
+    min-height is necessary to ensure that the application
+    takes up the whole page. I need to find a new way to push
+    the footer to the bottom of the page/
+  */
+
+  /*padding-bottom: 210px;*/
 }
 
 a {
@@ -71,7 +89,7 @@ a:hover {
     background: -webkit-linear-gradient(top, #cda028 0%,#edc150 50%,#e5ac15 51%,#eaaf15 100%);
     background: -ms-linear-gradient(top, #cda028 0%,#edc150 50%,#e5ac15 51%,#eaaf15 100%);
     background: -o-linear-gradient(top, #cda028 0%,#edc150 50%,#e5ac15 51%,#eaaf15 100%);
-    background: linear-gradient(top, #cda028 0%,#edc150 50%,#e5ac15 51%,#eaaf15 100%);
+    /*background: linear-gradient(top, #cda028 0%,#edc150 50%,#e5ac15 51%,#eaaf15 100%);*/
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr="#cda028", endColorstr="#eaaf15", GradientType=0);
     color: #423434;
     border-top: 1px solid black;
