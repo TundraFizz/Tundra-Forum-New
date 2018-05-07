@@ -129,14 +129,41 @@ app.post("/logout", function(req, res){
   res.json(data);
 });
 
-app.get("/api", function(req, res){
+app.get("/api/get-boards", function(req, res){
   // res.render("index.ejs", {version: version});
-  console.log("PING FROM CLIENT!");
-  var sql  = "SELECT * FROM sample";
+  var sql  = "SELECT board_id, name, description, thread_count, post_count, icon FROM boards";
   var args = [];
   con.query(sql, args, function(err, rows){
-    // console.log(rows);
-    res.send(rows);
+    res.json(rows);
+  });
+});
+
+app.post("/api/sign-up", function(req, res){
+  console.log("=============================================");
+  console.log(req.body);
+  console.log("=============================================");
+  var post  = req.body;
+  var name  = post["name"];
+  var email = post["email"];
+
+
+  // Create an encrypted object from the password that the user gave
+  var password        = Encrypt(post["pass"]);
+  var passwordContent = password["content"];
+  var passwordTag     = password["tag"];
+  var passwordIv      = password["iv"];
+
+  var sql  = "SELECT COUNT(*) AS count FROM users WHERE name=?";
+  var args = [name];
+  con.query(sql, args, function(err, rows){
+    if(rows[0]["count"]){
+      res.json({"msg": `${name} That account already exists!`, "err": 1});
+    }else{
+      var newUser = {name: name, password_content: passwordContent, password_tag: passwordTag, password_iv: passwordIv, email: email};
+      con.query("INSERT INTO users SET ?", newUser, function(err){
+        res.json({"msg": `Account created ${name}`, "err": 0});
+      });
+    }
   });
 });
 
