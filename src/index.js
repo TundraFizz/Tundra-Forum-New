@@ -1,47 +1,32 @@
 import React    from "react";
 import ReactDOM from "react-dom";
+import {post}   from "./post.js";
 import "./themes/zelda/theme.css";
 
 class Application extends React.Component {
   constructor(props){
     super(props);
-
     // this.Delta = this.Delta.bind(this);
 
     this.state = {
-      "test": 456,
-      "count": 1,
       "ready": false
     };
   }
 
   componentWillMount(){
     var self = this;
-    fetch("/api/").then(function(res){return res.json()})
-    .then(function(myJson){
-      let reeee = "";
-      for(let i in myJson){
-        console.log(myJson[i]);
-        reeee += "1234";
-      }
-      console.log(reeee);
+    fetch("/api/get-boards").then(function(res){return res.json()})
+    .then(function(boards){
       self.setState({
-        "boards": reeee,
+        "boards": boards,
         "ready": true
       });
     });
   }
 
-  // Delta(){
-  //   var temp = this.state.count + 1
-  //   this.setState({
-  //     "count": temp
-  //   });
-  // }
-
   render(){
     if(!this.state.ready){
-      return(<div style={{"background-color":"white"}}></div>);
+      return(<div></div>);
     }else if(true){
     return(
       <div id="root2">
@@ -58,9 +43,67 @@ class Header extends React.Component {
   render(){
     return(
       <div className="header">
+      <HeaderBar/>
         <CenterContent>
           <Logo/>
         </CenterContent>
+      </div>
+    );
+  }
+}
+
+class HeaderBar extends React.Component {
+  GetMail(){
+    alert("TODO: GetMail()");
+  }
+
+  GetNotifications(){
+    alert("TODO: GetNotifications()");
+  }
+
+  GetUserControlPanel(){
+    alert("TODO: GetUserControlPanel()");
+  }
+
+  SignOut(){
+    alert("TODO: SignOut()");
+  }
+
+  SignUp(){
+    var postData = {
+      "name" : "Ben",
+      "email": "fddkfjkdsf@gmail.com",
+      "pass" : "muhpassword"
+    };
+
+    post("/api/sign-up", postData)
+    .then(res => {
+      console.log(res);
+    });
+  }
+
+  render(){
+    return(
+      <div>
+      <div className="bar">
+        <ul>
+          <li>Login</li>
+          <li className="seperator"></li>
+          <li>Create Account</li>
+        </ul>
+      </div>
+
+      <div className="bar">
+        <ul>
+          <li onClick={this.SignUp             }>TEST: Sign Up</li>
+          <li className="seperator"></li>
+          <li className="mail"          onClick={this.GetMail            }></li>
+          <li className="notifications" onClick={this.GetNotifications   }>Notifications</li>
+          <li                           onClick={this.GetUserControlPanel}>MageLeif</li>
+          <li className="seperator"></li>
+          <li                           onClick={this.SignOut            }>Sign Out</li>
+        </ul>
+      </div>
       </div>
     );
   }
@@ -114,20 +157,48 @@ class NavBarTriangles extends React.Component {
 }
 
 class MainForum extends React.Component {
-  constructor(props){
-    super(props);
-
-    // this.state = {
-    //   // "boards": "EMPTY"
-    // };
-
-    // this.GetStuff = this.GetStuff.bind(this);
+  RenderBoards(){
+    console.log(this.props.qwe);
+    return this.props.qwe.map((obj, i) =>
+      <div className="board" key={i}>
+        <div className="icon">
+          <div className="icon-bg"></div>
+        </div>
+        <div className="info">
+          <div className="inner">
+            <a className="board-title" board-id={obj.board_id}>{obj.name}</a>
+            <div className="description">{obj.description}</div>
+          </div>
+        </div>
+        <div className="last-poster">
+          <div className="inner">
+            <div className="TBD">Last Poster: TBD</div>
+          </div>
+        </div>
+        <div className="stats">
+          <div className="inner">
+            <div className="thread-count">{obj.thread_count} topics</div>
+            <div className="post-count">{obj.post_count} replies</div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   render(){
-    // this.GetStuff();
     return(
-      <span>{this.props.qwe}</span>
+      <div id="forum-window">
+        <div id="content" type="board-index">
+          <div className="category">
+            <div className="title">❧ The New Pipeline</div>
+            <div className="thingy">
+              <div className="thingy-2">
+                {this.RenderBoards()}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 }
