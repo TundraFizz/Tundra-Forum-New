@@ -10,8 +10,26 @@ class Application extends React.Component {
 
     this.state = {
       "test": 456,
-      "count": 1
+      "count": 1,
+      "ready": false
     };
+  }
+
+  componentWillMount(){
+    var self = this;
+    fetch("/api/").then(function(res){return res.json()})
+    .then(function(myJson){
+      let reeee = "";
+      for(let i in myJson){
+        console.log(myJson[i]);
+        reeee += "1234";
+      }
+      console.log(reeee);
+      self.setState({
+        "boards": reeee,
+        "ready": true
+      });
+    });
   }
 
   // Delta(){
@@ -22,13 +40,17 @@ class Application extends React.Component {
   // }
 
   render(){
+    if(!this.state.ready){
+      return(<div style={{"background-color":"white"}}></div>);
+    }else if(true){
     return(
-      <div>
+      <div id="root2">
         <Header/>
         <NavBar/>
-        <MainForum/>
+        <MainForum qwe={this.state.boards}/>
       </div>
-    )
+    );
+    }
   }
 }
 
@@ -92,9 +114,20 @@ class NavBarTriangles extends React.Component {
 }
 
 class MainForum extends React.Component {
+  constructor(props){
+    super(props);
+
+    // this.state = {
+    //   // "boards": "EMPTY"
+    // };
+
+    // this.GetStuff = this.GetStuff.bind(this);
+  }
+
   render(){
+    // this.GetStuff();
     return(
-      <span>Temp</span>
+      <span>{this.props.qwe}</span>
     );
   }
 }
