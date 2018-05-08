@@ -3,7 +3,6 @@ body {
   min-height: 100%;
 }
 
-/*div#root > div {*/
 #root2 {
   position: relative;
   display: block;
@@ -23,6 +22,28 @@ body {
   */
 
   /*padding-bottom: 210px;*/
+}
+
+.login-window {
+  top: 30px;
+  right: 4px;
+  width: 300px;
+  height: 200px;
+  border: 1px solid black;
+  background-color: lightgray;
+  position: fixed;
+  z-index: 10000;
+}
+
+.signup-window {
+  top: 30px;
+  right: 4px;
+  width: 300px;
+  height: 200px;
+  border: 1px solid black;
+  background-color: lightgray;
+  position: fixed;
+  z-index: 10000;
 }
 
 a {
