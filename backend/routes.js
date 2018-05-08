@@ -1,9 +1,10 @@
 var app     = require("./server.js").app;
-var mysql   = require("mysql");
-var fs      = require("fs");
-var crypto  = require("crypto");
 var version = require("./package.json").version;
 var db      = require("./package.json").db;
+var mysql   = require("mysql");
+var bcrypt  = require("bcrypt");
+var crypto  = require("crypto");
+var fs      = require("fs");
 
 var con = mysql.createConnection({
   host:     db["host"],
@@ -12,6 +13,47 @@ var con = mysql.createConnection({
   database: db["database"]
 });
 
+GenerateToken = function(length){return new Promise((resolve) => {
+  // GenerateToken takes one paramter, which is how long the token will be
+  // The length needs to be converted into bytes
+  // Every 3 bytes = 4 characters long
+  // Therefore, length MUST be a multiple of 4
+  // [length] * (3/4) = [bytes]
+  // [bytes]  * (4/3) = [length]
+  if(length % 4){
+    console.log("ERROR! GenerateToken must be a multiple of four");
+    return;
+  }
+
+  var bytes = length * 3 / 4;
+
+  var processing = false;
+  var timer      = setInterval(function(){
+    if(!processing){
+      processing = true;
+      crypto.randomBytes(bytes, function(err, buffer){
+        var token = buffer.toString("base64");
+        token     = encodeURIComponent(token); // Ensure that's safe for URLs
+        var sql   = "SELECT id FROM tokens WHERE token=?";
+        var args  = [token];
+
+        con.query(sql, args, function(err, rows){
+          if(rows.length)
+            processing = false; // Token already exists, try again
+          else{
+            processing = false;
+            clearInterval(timer);
+            resolve(token);
+          }
+        });
+      });
+    }
+  }, 100);
+})}
+
+/**************/
+/* DEPRECATED */
+/**************/
 function Encrypt(password){
   var algorithm = "aes-256-gcm";
   var specialKey = "3zTvzr3p67VC61jmV54rIYu1545x4TlY";
@@ -34,6 +76,9 @@ function Encrypt(password){
   };
 }
 
+/**************/
+/* DEPRECATED */
+/**************/
 function Decrypt(encryptedData, password, passwordIv){
   var algorithm = "aes-256-gcm";
   var specialKey = "3zTvzr3p67VC61jmV54rIYu1545x4TlY";
@@ -52,6 +97,9 @@ function Decrypt(encryptedData, password, passwordIv){
   return dec;
 }
 
+/**************/
+/* DEPRECATED */
+/**************/
 app.post("/sign-up", function(req, res){
   var post  = req.body;
   var name  = post["name"];
@@ -77,6 +125,9 @@ app.post("/sign-up", function(req, res){
   });
 });
 
+/**************/
+/* DEPRECATED */
+/**************/
 app.post("/login", function(req, res){
   var post     = req.body;
   var name     = post["name"];
@@ -124,6 +175,9 @@ app.post("/login", function(req, res){
   });
 });
 
+/**************/
+/* DEPRECATED */
+/**************/
 app.post("/logout", function(req, res){
   var data = {"logout": true};
   res.json(data);
@@ -131,7 +185,7 @@ app.post("/logout", function(req, res){
 
 app.get("/api/get-boards", function(req, res){
   // res.render("index.ejs", {version: version});
-  var sql  = "SELECT board_id, name, description, thread_count, post_count, icon FROM boards";
+  var sql  = "SELECT id, name, description, thread_count, post_count, icon FROM boards";
   var args = [];
   con.query(sql, args, function(err, rows){
     res.json(rows);
@@ -139,29 +193,102 @@ app.get("/api/get-boards", function(req, res){
 });
 
 app.post("/api/sign-up", function(req, res){
-  console.log("=============================================");
-  console.log(req.body);
-  console.log("=============================================");
-  var post  = req.body;
-  var name  = post["name"];
-  var email = post["email"];
+  var ip       = req.connection.remoteAddress;
+  var post     = req.body;
+  var name     = post["name"];
+  var email    = post["email"];
+  var password = post["password"];
+  var confirm  = post["confirm"];
+  var tou      = post["tou"];
+  var captcha  = post["captcha"];
 
+  // Check if name exists
+  // Check if email exists
+  // Check password strength
+  // Check if passwords match
+  // Check if TOU accepted
+  // Check if captcha passed
 
-  // Create an encrypted object from the password that the user gave
-  var password        = Encrypt(post["pass"]);
-  var passwordContent = password["content"];
-  var passwordTag     = password["tag"];
-  var passwordIv      = password["iv"];
+  bcrypt.hash(password, 10, function(err, hashedPassword){
+    var sql  = "INSERT INTO users (name, email, password, join_date, last_seen) VALUES (?,?,?,NOW(),NOW())";
+    var args = [name, email, hashedPassword];
 
-  var sql  = "SELECT COUNT(*) AS count FROM users WHERE name=?";
-  var args = [name];
+    con.query(sql, args, function(err, rows){
+      if(err){
+        res.json({"msg": err, "err": 1});
+        return;
+      }
+
+      var user_id = rows.insertId;
+
+      // Generate a token for verification after the user was created
+      GenerateToken(16)
+      .then((token) => {
+        var sql  = "INSERT INTO tokens (users_id, purpose, ip_address, token) VALUES (?,?,?,?)";
+        var args = [user_id, 1, ip, token];
+
+        con.query(sql, args, function(err, rows){
+          console.log("========== TOKEN ==========");
+          console.log(token);
+
+          // var transporter = emailer.createTransport({
+          //   service: "gmail",
+          //   auth: {
+          //     user: "fizz.gg.site@gmail.com",
+          //     pass: "aaaaaaaaaaaaaaaaaaaa"
+          //   }
+          // });
+
+          // var mailOptions = {
+          //   "from"   : "fizz.gg.site@gmail.com",
+          //   "to"     : email,
+          //   "subject": "Your verification code for fizz.gg",
+          //   "text"   : `https://fizz.gg/verify?token=${token}`
+          // };
+
+          // transporter.sendMail(mailOptions, function(error, info){
+          //   res.json({"msg":"User created", "err":"false"});
+          // });
+        });
+      });
+    });
+  });
+});
+
+app.post("/api/login", function(req, res){
+  var ip       = req.connection.remoteAddress;
+  var post     = req.body;
+  var email    = post["email"];
+  var password = post["password"];
+
+  // Pull the hash from the database
+  var sql  = "SELECT id, password FROM users WHERE email=?";
+  var args = [email];
+
   con.query(sql, args, function(err, rows){
-    if(rows[0]["count"]){
-      res.json({"msg": `${name} That account already exists!`, "err": 1});
+    if(err){
+      res.json({"msg": err, "err": 1});
+    }
+    else if(rows.length == 0){
+      res.json({"msg":"Incorrect email/password", "err": 1});
     }else{
-      var newUser = {name: name, password_content: passwordContent, password_tag: passwordTag, password_iv: passwordIv, email: email};
-      con.query("INSERT INTO users SET ?", newUser, function(err){
-        res.json({"msg": `Account created ${name}`, "err": 0});
+      var hashedPassword = rows[0]["password"];
+      var users_id       = rows[0]["id"];
+
+      bcrypt.compare(password, hashedPassword, function(err, res2){
+        if(res2){
+          GenerateToken(40)
+          .then((token) => {
+            var sql  = "INSERT INTO tokens (users_id, purpose, ip_address, token) VALUES (?,?,?,?)";
+            var args = [users_id, 3, ip, token];
+
+            con.query(sql, args, function(err, rows){
+              res.json({"msg": "Logged in", "token": token, "err": 0});
+            });
+          });
+        }else{
+          res.json({"msg":"Incorrect email/password", "err": 1});
+        }
       });
     }
   });
