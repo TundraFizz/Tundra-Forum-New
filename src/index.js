@@ -1,7 +1,18 @@
-import React    from "react";
-import ReactDOM from "react-dom";
-import {post}   from "./post.js";
+import React       from "react";
+import ReactDOM    from "react-dom";
+import {BrowserRouter, Route} from "react-router-dom";
+import {post, get} from "./post.js";
 import "./themes/zelda/theme.css";
+const Cookie = require("js-cookie");
+
+// render={() => <div>Home</div>}/>
+
+// <Route path="/hi" component={Application}/>
+
+// ReactDOM.render(
+//   <Application/>, document.getElementById("root")
+// );
+
 
 class Application extends React.Component {
   constructor(props){
@@ -9,16 +20,17 @@ class Application extends React.Component {
     // this.Delta = this.Delta.bind(this);
 
     this.state = {
-      "ready": false
+      "ready": false,
+      "token": ""
     };
   }
 
   componentWillMount(){
     var self = this;
-    fetch("/api/get-boards").then(function(res){return res.json()})
-    .then(function(boards){
+    get("/api/get-boards", "")
+    .then(res => {
       self.setState({
-        "boards": boards,
+        "boards": res,
         "ready": true
       });
     });
@@ -52,28 +64,83 @@ class Header extends React.Component {
   }
 }
 
-class HeaderBar extends React.Component {
-  GetMail(){
-    alert("TODO: GetMail()");
+class LoginWindow extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      "email"   : "y",
+      "password": "z"
+    };
   }
 
-  GetNotifications(){
-    alert("TODO: GetNotifications()");
+  HandleChange = (e) => {
+    this.setState({[e.target.name]: e.target.value});
   }
 
-  GetUserControlPanel(){
-    alert("TODO: GetUserControlPanel()");
-  }
-
-  SignOut(){
-    alert("TODO: SignOut()");
-  }
-
-  SignUp(){
+  Login = () => {
     var postData = {
-      "name" : "Ben",
-      "email": "fddkfjkdsf@gmail.com",
-      "pass" : "muhpassword"
+      "email"   : this.state.email,
+      "password": this.state.password
+    };
+
+    post("/api/login", postData)
+    .then(res => {
+      console.log(res);
+      Cookie.set("token", res.token);
+    });
+  }
+
+  render(){
+    return(
+      <div className="login-window" style={{"display":this.props.display}}>
+        <table>
+          <tbody>
+            <tr>
+              <td>Email</td>
+              <td><input name="email" value={this.state.email} onChange={this.HandleChange} type="text"/></td>
+            </tr>
+            <tr>
+              <td>Password</td>
+              <td><input name="password" value={this.state.password} onChange={this.HandleChange} type="password"/></td>
+            </tr>
+            <tr>
+              <td><input type="button" value="Login" onClick={this.Login}/></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+}
+
+class SignupWindow extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      "email"   : "1",
+      "password": "1",
+      "confirm" : "1",
+      "name"    : "1",
+      "tou"     : false,
+      "captcha" : "true"
+    };
+  }
+
+  HandleChange = (e) => {
+    var name = e.target.name;
+
+    if(name === "tou") this.setState({[name]: e.target.checked});
+    else               this.setState({[name]: e.target.value});
+  }
+
+  CreateAccount = () => {
+    var postData = {
+      "email"   : this.state.email,
+      "password": this.state.password,
+      "confirm" : this.state.confirm,
+      "name"    : this.state.name,
+      "tou"     : this.state.tou,
+      "captcha" : this.state.captcha
     };
 
     post("/api/sign-up", postData)
@@ -84,26 +151,108 @@ class HeaderBar extends React.Component {
 
   render(){
     return(
+      <div className="signup-window" style={{"display":this.props.display}}>
+        <table>
+          <tbody>
+            <tr>
+              <td>Email</td>
+              <td><input name="email" value={this.state.email} onChange={this.HandleChange} type="text"/></td>
+            </tr>
+            <tr>
+              <td>Password</td>
+              <td><input name="password" value={this.state.password} onChange={this.HandleChange} type="password"/></td>
+            </tr>
+            <tr>
+              <td>Confirm Password</td>
+              <td><input name="confirm" value={this.state.confirm} onChange={this.HandleChange} type="password"/></td>
+            </tr>
+            <tr>
+              <td>Display Name</td>
+              <td><input name="name" value={this.state.name} onChange={this.HandleChange} type="text"/></td>
+            </tr>
+            <tr>
+              <td>Terms of Use</td>
+              <td><input name="tou" checked={this.state.tou} onChange={this.HandleChange} type="checkbox"/></td>
+            </tr>
+            <tr>
+              <td>TODO: Captcha</td>
+            </tr>
+            <tr>
+              <td><input type="button" value="Create Account" onClick={this.CreateAccount}/></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+}
+
+class HeaderBar extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      "displayLogin"        : "none",
+      "displayCreateAccount": "none"
+    };
+  }
+
+  GetMail = () => {
+    alert("TODO: GetMail()");
+  }
+
+  GetNotifications = () => {
+    alert("TODO: GetNotifications()");
+  }
+
+  GetUserControlPanel = () => {
+    alert("TODO: GetUserControlPanel()");
+  }
+
+  CreateAccount = () => {
+    // Hide "login window" and toggle "signup window"
+
+    this.setState({"displayLogin": "none"});
+
+    if(this.state.displayCreateAccount === "none") this.setState({"displayCreateAccount": "block"});
+    else                                           this.setState({"displayCreateAccount": "none"});
+  }
+
+  Login = () => {
+    // Hide "signup window" and toggle "login window"
+
+    this.setState({"displayCreateAccount": "none"});
+
+    if(this.state.displayLogin === "none") this.setState({"displayLogin": "block"});
+    else                                   this.setState({"displayLogin": "none"});
+  }
+
+  Logout = () => {
+    alert("TODO: Logout()");
+  }
+
+  render(){
+    return(
       <div>
       <div className="bar">
         <ul>
-          <li>Login</li>
+          <li onClick={this.Login}>Login</li>
           <li className="seperator"></li>
-          <li>Create Account</li>
+          <li onClick={this.CreateAccount}>Create Account</li>
         </ul>
       </div>
 
       <div className="bar">
         <ul>
-          <li onClick={this.SignUp             }>TEST: Sign Up</li>
-          <li className="seperator"></li>
-          <li className="mail"          onClick={this.GetMail            }></li>
+          <li className="mail"          onClick={this.GetMail            }>Mail</li>
           <li className="notifications" onClick={this.GetNotifications   }>Notifications</li>
           <li                           onClick={this.GetUserControlPanel}>MageLeif</li>
           <li className="seperator"></li>
-          <li                           onClick={this.SignOut            }>Sign Out</li>
+          <li                           onClick={this.Logout             }>Sign Out</li>
         </ul>
       </div>
+
+      <LoginWindow  display={this.state.displayLogin}/>
+      <SignupWindow display={this.state.displayCreateAccount}/>
       </div>
     );
   }
@@ -158,7 +307,6 @@ class NavBarTriangles extends React.Component {
 
 class MainForum extends React.Component {
   RenderBoards(){
-    console.log(this.props.qwe);
     return this.props.qwe.map((obj, i) =>
       <div className="board" key={i}>
         <div className="icon">
@@ -213,6 +361,21 @@ class CenterContent extends React.Component {
   }
 }
 
-ReactDOM.render(
-  <Application/>, document.getElementById("root")
-);
+class Kjkshfksd extends React.Component {
+  render(){
+    return(
+      <div id="root2">
+        Kjkshfksd sdlfsdlfj sdfhsdjf skdjfjskldf lksdfjklsd
+      </div>
+    );
+  }
+}
+
+ReactDOM.render((
+  <BrowserRouter>
+    <div>
+      <Route exact path="/" component={Application}/>
+      <Route path="/news" component={Kjkshfksd}/>
+    </div>
+  </BrowserRouter>
+), document.getElementById("root"));
