@@ -12,7 +12,8 @@
     "socket.io": "latest",
     "node-sass-middleware": "latest",
     "node-mysql": "latest",
-    "moment": "latest"
+    "moment": "latest",
+    "bcrypt": "latest"
   },
   "dependency-comments": {
     "express": "Node.js web application framework",
@@ -49,8 +50,8 @@
     "chai": "Allows use of the 'assert' command when doing unit tests"
   },
   "scripts": {
-    "start": "node src/server.js",
-    "nodemon": "nodemon src/server.js",
+    "start": "node server.js",
+    "nodemon": "nodemon server.js",
     "test": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage && rm -rf ./coverage",
     "cover": "nyc mocha"
   },
