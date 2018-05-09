@@ -1,18 +1,16 @@
 import React       from "react";
 import ReactDOM    from "react-dom";
 import {BrowserRouter, Route} from "react-router-dom";
-import {post, get} from "./post.js";
+import {post} from "./post.js"; // import {post, get} from "./post.js";
 import "./themes/zelda/theme.css";
 const Cookie = require("js-cookie");
 
-// render={() => <div>Home</div>}/>
-
-// <Route path="/hi" component={Application}/>
-
-// ReactDOM.render(
-//   <Application/>, document.getElementById("root")
-// );
-
+/***** Helper Functions *****/
+function GetCookie(){
+  // Returns null if the "token" cookie doesn't exist, otherwise it returns that actual "token"
+  return (Cookie.get("token") !== undefined) ? Cookie.get("token") : null;
+}
+/***** Helper Functions *****/
 
 class Application extends React.Component {
   constructor(props){
@@ -27,7 +25,14 @@ class Application extends React.Component {
 
   componentWillMount(){
     var self = this;
-    get("/api/get-boards", "")
+
+    var postData = {
+      "token": GetCookie()
+    };
+
+    console.log(postData);
+
+    post("/api/get-boards", postData)
     .then(res => {
       self.setState({
         "boards": res,
@@ -227,7 +232,14 @@ class HeaderBar extends React.Component {
   }
 
   Logout = () => {
-    alert("TODO: Logout()");
+    var postData = {
+      "token": GetCookie()
+    };
+
+    post("/api/logout", postData)
+    .then(res => {
+      Cookie.remove("token");
+    });
   }
 
   render(){
