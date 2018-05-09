@@ -42,41 +42,41 @@ GetUser = function(token){return new Promise((resolve) => {
 })}
 
 GenerateToken = function(length){return new Promise((resolve) => {
-  // GenerateToken takes one paramter, which is how long the token will be
-  // The length needs to be converted into bytes
-  // Every 3 bytes = 4 characters long
-  // Therefore, length MUST be a multiple of 4
-  // [length] * (3/4) = [bytes]
-  // [bytes]  * (4/3) = [length]
-  if(length % 4){
-    console.log("ERROR! GenerateToken must be a multiple of four");
-    return;
-  }
-
-  var bytes = length * 3 / 4;
-
-  var processing = false;
-  var timer      = setInterval(function(){
-    if(!processing){
-      processing = true;
-      crypto.randomBytes(bytes, function(err, buffer){
-        var token = buffer.toString("base64");
-        token     = encodeURIComponent(token); // Ensure that's safe for URLs
-        var sql   = "SELECT id FROM tokens WHERE token=?";
-        var args  = [token];
-
-        con.query(sql, args, function(err, rows){
-          if(rows.length)
-            processing = false; // Token already exists, try again
-          else{
-            processing = false;
-            clearInterval(timer);
-            resolve(token);
-          }
-        });
-      });
+  GenerateTokenHelper = function(length){return new Promise((resolve) => {
+    if(length % 4){
+      console.log("ERROR! GenerateToken must be a multiple of four");
+      resolve("DEAD");
+      return;
     }
-  }, 100);
+
+    var bytes = length * 3 / 4;
+    crypto.randomBytes(bytes, function(err, buffer){
+      var token = buffer.toString("base64");
+      token     = encodeURIComponent(token); // Ensure that's safe for URLs
+      token     = token.replace(/(%2B|%2F)/gi, "");
+
+      if(length != token.length){
+        // Make sure multiple of four
+        var more = length - token.length;
+        more = Math.ceil(more/4) * 4;
+
+        GenerateTokenHelper(more)
+        .then((q) => {
+          resolve(token+q);
+          return;
+        });
+      }else{
+        resolve(token);
+        return;
+      }
+    });
+  })}
+
+  GenerateTokenHelper(length).then(result => {
+    result = result.substring(0, length);
+    resolve(result);
+    return;
+  });
 })}
 
 app.post("/api/get-boards", function(req, res){
@@ -176,7 +176,7 @@ app.post("/api/login", function(req, res){
 
       bcrypt.compare(password, hashedPassword, function(err, res2){
         if(res2){
-          GenerateToken(40)
+          GenerateToken(100)
           .then((token) => {
             var sql  = "INSERT INTO tokens (users_id, purpose, ip_address, token) VALUES (?,?,?,?)";
             var args = [users_id, PURPOSE_LOGGED_IN, ip, token];
