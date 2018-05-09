@@ -6,12 +6,40 @@ var bcrypt  = require("bcrypt");
 var crypto  = require("crypto");
 var fs      = require("fs");
 
+const PURPOSE_NEW_ACCOUNT     = 1;
+const PURPOSE_FORGOT_PASSWORD = 2;
+const PURPOSE_LOGGED_IN       = 3;
+
 var con = mysql.createConnection({
   host:     db["host"],
   user:     db["user"],
   password: db["password"],
   database: db["database"]
 });
+
+GetUser = function(token){return new Promise((resolve) => {
+  if(!token){
+    resolve(0);
+    return;
+  }else{
+    var sql = `
+    SELECT u.permission FROM users u
+    JOIN tokens t on t.users_id=u.id
+    WHERE t.token=?`;
+    var args = [token];
+
+    con.query(sql, args, function(err, rows){
+      if(rows.length == 0){
+        // If the user gave us a token that doesn't exist in the database
+        resolve(0);
+        return;
+      }else{
+        resolve(rows[0]["permission"]);
+        return;
+      }
+    });
+  }
+})}
 
 GenerateToken = function(length){return new Promise((resolve) => {
   // GenerateToken takes one paramter, which is how long the token will be
@@ -183,12 +211,15 @@ app.post("/logout", function(req, res){
   res.json(data);
 });
 
-app.get("/api/get-boards", function(req, res){
-  // res.render("index.ejs", {version: version});
-  var sql  = "SELECT id, name, description, thread_count, post_count, icon FROM boards";
-  var args = [];
-  con.query(sql, args, function(err, rows){
-    res.json(rows);
+app.post("/api/get-boards", function(req, res){
+  GetUser(req.body["token"])
+  .then((permission) => {
+    console.log("PERMISSION LEVEL IS:", permission);
+    var sql  = "SELECT id, name, description, thread_count, post_count, icon FROM boards WHERE permission <= ?";
+    var args = [permission];
+    con.query(sql, args, function(err, rows){
+      res.json(rows);
+    });
   });
 });
 
@@ -225,7 +256,7 @@ app.post("/api/sign-up", function(req, res){
       GenerateToken(16)
       .then((token) => {
         var sql  = "INSERT INTO tokens (users_id, purpose, ip_address, token) VALUES (?,?,?,?)";
-        var args = [user_id, 1, ip, token];
+        var args = [user_id, PURPOSE_NEW_ACCOUNT, ip, token];
 
         con.query(sql, args, function(err, rows){
           console.log("========== TOKEN ==========");
@@ -280,7 +311,7 @@ app.post("/api/login", function(req, res){
           GenerateToken(40)
           .then((token) => {
             var sql  = "INSERT INTO tokens (users_id, purpose, ip_address, token) VALUES (?,?,?,?)";
-            var args = [users_id, 3, ip, token];
+            var args = [users_id, PURPOSE_LOGGED_IN, ip, token];
 
             con.query(sql, args, function(err, rows){
               res.json({"msg": "Logged in", "token": token, "err": 0});
@@ -290,6 +321,25 @@ app.post("/api/login", function(req, res){
           res.json({"msg":"Incorrect email/password", "err": 1});
         }
       });
+    }
+  });
+});
+
+app.post("/api/logout", function(req, res){
+  var post  = req.body;
+  var token = post["token"];
+
+  // The user wants to logout; delete the token he's been using from the database
+  var sql  = "DELETE FROM tokens WHERE token=?";
+  var args = [token];
+
+  con.query(sql, args, function(err, rows){
+    console.log(rows);
+    if(err){
+      console.log(err);
+      res.json({"msg": err, "err": 1});
+    }else{
+      res.json({"msg":"You've been logged out", "err": 0});
     }
   });
 });
