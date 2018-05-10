@@ -17,12 +17,19 @@ class Application extends React.Component {
     super(props);
 
     this.state = {
-      "ready": false,
-      "token": ""
+      "token": "",
+      "name" : null,
+      "ready": false
     };
   }
 
-  GetThisToWork = () =>{
+  SetName = (name) => {
+    this.setState({
+      "name": name
+    });
+  }
+
+  QueryIndex = () => {
     var self = this;
 
     var postData = {
@@ -32,50 +39,168 @@ class Application extends React.Component {
     post("/api/get-boards", postData)
     .then(res => {
       self.setState({
-        "boards": res,
-        "ready": true
+        "boards": res.boards,
+        "name"  : res.name,
+        "ready" : true
       });
     });
   }
 
+  QueryBoard = () => {
+    // TODO
+    //
+  }
+
+  QueryThread = () => {
+    // TODO
+    //
+  }
+
   componentWillMount(){
-    this.GetThisToWork();
+    this.QueryIndex();
   }
 
   render(){
+    var HeaderBarProps = {
+      "state"     : this.state,
+      "QueryIndex": this.QueryIndex,
+      "SetName"   : this.SetName,
+      "Logout"    : this.Logout
+    };
+
     if(!this.state.ready){
       return(<div></div>);
     }else if(true){
     return(
       <div id="root2">
-        <Header qwe={this.GetThisToWork}/>
-        <NavBar/>
-        <MainForum qwe={this.state.boards}/>
+        <div className="header">
+          <HeaderBar {...HeaderBarProps}/>
+            <CenterContent>
+              <Logo/>
+            </CenterContent>
+        </div>
+
+        <NavBarMenu/>
+        <div className="nav-bar-trim"/>
+        <div className="triangles"/>
+
+        <MainForum boards={this.state.boards}/>
       </div>
     );
     }
   }
 }
 
-class Header extends React.Component {
+class HeaderBar extends React.Component {
+  /* ---------- Props ----------
+     state      = Application.state
+     QueryIndex = Application.QueryIndex
+     SetName    = Application.SetName
+     Logout     = Application.Logout     */
+
+  constructor(props){
+    super(props);
+    this.state = {
+      "displayLogin"        : "none",
+      "displayCreateAccount": "none"
+    };
+  }
+
+  GetMail = () => {
+    alert("TODO: GetMail()");
+    //
+  }
+
+  GetNotifications = () => {
+    alert("TODO: GetNotifications()");
+    //
+  }
+
+  GetUserControlPanel = () => {
+    alert("TODO: GetUserControlPanel()");
+    //
+  }
+
+  Logout = () => {
+    var postData = {
+      "token": GetCookie()
+    };
+
+    post("/api/logout", postData)
+    .then(res => {
+      Cookie.remove("token");
+      this.props.QueryIndex();
+    });
+  }
+
+  ShowLoginWindow = () => {
+    // Hide "signup window" and toggle "login window"
+
+    this.setState({"displayCreateAccount": "none"});
+
+    if(this.state.displayLogin === "none") this.setState({"displayLogin": "block"});
+    else                                   this.setState({"displayLogin": "none"});
+  }
+
+  ShowCreateAccountWindow = () => {
+    // Hide "login window" and toggle "signup window"
+
+    this.setState({"displayLogin": "none"});
+
+    if(this.state.displayCreateAccount === "none") this.setState({"displayCreateAccount": "block"});
+    else                                           this.setState({"displayCreateAccount": "none"});
+  }
+
   render(){
+    var bar;
+
+    if(this.props.state.name){
+      bar = (
+      <div className="bar">
+        <ul>
+          <li className="mail"          onClick={this.GetMail            }>Mail</li>
+          <li className="notifications" onClick={this.GetNotifications   }>Notifications</li>
+          <li                           onClick={this.GetUserControlPanel}>{this.props.state.name}</li>
+          <li className="seperator"></li>
+          <li                           onClick={this.Logout             }>Sign Out</li>
+        </ul>
+      </div>
+      );
+    }else{
+      bar = (
+      <div className="bar">
+        <ul>
+          <li onClick={this.ShowLoginWindow}>Login</li>
+          <li className="seperator"></li>
+          <li onClick={this.ShowCreateAccountWindow}>Create Account</li>
+        </ul>
+      </div>
+      );
+    }
+
     return(
-      <div className="header">
-      <HeaderBar qwe={this.props.qwe}/>
-        <CenterContent>
-          <Logo/>
-        </CenterContent>
+      <div>
+        {bar}
+        <LoginWindow  {...this.props} display={this.state.displayLogin}/>
+        <SignupWindow {...this.props} display={this.state.displayCreateAccount}/>
       </div>
     );
   }
 }
 
 class LoginWindow extends React.Component {
+  /* ---------- Props ----------
+     state      = Application.state
+     QueryIndex = Application.QueryIndex
+     SetName    = Application.SetName
+     Logout     = Application.Logout
+     display    = HeaderBar.state.displayLogin */
+
   constructor(props){
     super(props);
     this.state = {
-      "email"   : "y",
-      "password": "z"
+      "email"   : "",
+      "password": ""
     };
   }
 
@@ -91,10 +216,8 @@ class LoginWindow extends React.Component {
 
     post("/api/login", postData)
     .then(res => {
-      console.log(res);
       Cookie.set("token", res.token);
-
-      this.props.qwe();
+      this.props.QueryIndex();
     });
   }
 
@@ -122,6 +245,13 @@ class LoginWindow extends React.Component {
 }
 
 class SignupWindow extends React.Component {
+  /* ---------- Props ----------
+     state      = Application.state
+     QueryIndex = Application.QueryIndex
+     SetName    = Application.SetName
+     Logout     = Application.Logout
+     display    = HeaderBar.state.displayCreateAccount */
+
   constructor(props){
     super(props);
     this.state = {
@@ -195,101 +325,10 @@ class SignupWindow extends React.Component {
   }
 }
 
-class HeaderBar extends React.Component {
-  constructor(props){
-    super(props);
-    this.state = {
-      "displayLogin"        : "none",
-      "displayCreateAccount": "none"
-    };
-  }
-
-  GetMail = () => {
-    alert("TODO: GetMail()");
-  }
-
-  GetNotifications = () => {
-    alert("TODO: GetNotifications()");
-  }
-
-  GetUserControlPanel = () => {
-    alert("TODO: GetUserControlPanel()");
-  }
-
-  CreateAccount = () => {
-    // Hide "login window" and toggle "signup window"
-
-    this.setState({"displayLogin": "none"});
-
-    if(this.state.displayCreateAccount === "none") this.setState({"displayCreateAccount": "block"});
-    else                                           this.setState({"displayCreateAccount": "none"});
-  }
-
-  Login = () => {
-    // Hide "signup window" and toggle "login window"
-
-    this.setState({"displayCreateAccount": "none"});
-
-    if(this.state.displayLogin === "none") this.setState({"displayLogin": "block"});
-    else                                   this.setState({"displayLogin": "none"});
-  }
-
-  Logout = () => {
-    var postData = {
-      "token": GetCookie()
-    };
-
-    post("/api/logout", postData)
-    .then(res => {
-      Cookie.remove("token");
-      this.props.qwe();
-    });
-  }
-
-  render(){
-    return(
-      <div>
-      <div className="bar">
-        <ul>
-          <li onClick={this.Login}>Login</li>
-          <li className="seperator"></li>
-          <li onClick={this.CreateAccount}>Create Account</li>
-        </ul>
-      </div>
-
-      <div className="bar">
-        <ul>
-          <li className="mail"          onClick={this.GetMail            }>Mail</li>
-          <li className="notifications" onClick={this.GetNotifications   }>Notifications</li>
-          <li                           onClick={this.GetUserControlPanel}>MageLeif</li>
-          <li className="seperator"></li>
-          <li                           onClick={this.Logout             }>Sign Out</li>
-        </ul>
-      </div>
-
-      <LoginWindow  display={this.state.displayLogin} qwe={this.props.qwe}/>
-      <SignupWindow display={this.state.displayCreateAccount}/>
-      </div>
-    );
-  }
-}
-
 class Logo extends React.Component {
   render(){
     return(
       <div className="logo"/>
-    );
-  }
-}
-
-class NavBar extends React.Component {
-  render(){
-    return(
-      <div>
-        <NavBarMenu/>
-        <NavBarTrim/>
-        <NavBarTriangles/>
-      </div>
     );
   }
 }
@@ -309,21 +348,9 @@ class NavBarMenu extends React.Component {
   }
 }
 
-class NavBarTrim extends React.Component {
-  render(){
-    return <div className="nav-bar-trim"/>
-  }
-}
-
-class NavBarTriangles extends React.Component {
-  render(){
-    return <div className="triangles"/>
-  }
-}
-
 class MainForum extends React.Component {
   RenderBoards(){
-    return this.props.qwe.map((obj, i) =>
+    return this.props.boards.map((obj, i) =>
       <div className="board" key={i}>
         <div className="icon">
           <div className="icon-bg"></div>
