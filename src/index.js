@@ -15,7 +15,6 @@ function GetCookie(){
 class Application extends React.Component {
   constructor(props){
     super(props);
-    // this.Delta = this.Delta.bind(this);
 
     this.state = {
       "ready": false,
@@ -23,14 +22,12 @@ class Application extends React.Component {
     };
   }
 
-  componentWillMount(){
+  GetThisToWork = () =>{
     var self = this;
 
     var postData = {
       "token": GetCookie()
     };
-
-    console.log(postData);
 
     post("/api/get-boards", postData)
     .then(res => {
@@ -41,13 +38,17 @@ class Application extends React.Component {
     });
   }
 
+  componentWillMount(){
+    this.GetThisToWork();
+  }
+
   render(){
     if(!this.state.ready){
       return(<div></div>);
     }else if(true){
     return(
       <div id="root2">
-        <Header/>
+        <Header qwe={this.GetThisToWork}/>
         <NavBar/>
         <MainForum qwe={this.state.boards}/>
       </div>
@@ -60,7 +61,7 @@ class Header extends React.Component {
   render(){
     return(
       <div className="header">
-      <HeaderBar/>
+      <HeaderBar qwe={this.props.qwe}/>
         <CenterContent>
           <Logo/>
         </CenterContent>
@@ -92,6 +93,8 @@ class LoginWindow extends React.Component {
     .then(res => {
       console.log(res);
       Cookie.set("token", res.token);
+
+      this.props.qwe();
     });
   }
 
@@ -239,6 +242,7 @@ class HeaderBar extends React.Component {
     post("/api/logout", postData)
     .then(res => {
       Cookie.remove("token");
+      this.props.qwe();
     });
   }
 
@@ -263,7 +267,7 @@ class HeaderBar extends React.Component {
         </ul>
       </div>
 
-      <LoginWindow  display={this.state.displayLogin}/>
+      <LoginWindow  display={this.state.displayLogin} qwe={this.props.qwe}/>
       <SignupWindow display={this.state.displayCreateAccount}/>
       </div>
     );
