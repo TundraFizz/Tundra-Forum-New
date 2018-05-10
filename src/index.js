@@ -151,15 +151,26 @@ class HeaderBar extends React.Component {
     else                                           this.setState({"displayCreateAccount": "none"});
   }
 
+  HideLoginAndCreateAccountWindows = () => {
+    this.setState({"displayLogin"        : "none"});
+    this.setState({"displayCreateAccount": "none"});
+  }
+
+
   render(){
+    var WindowProps = {
+      "HideLoginAndCreateAccountWindows": this.HideLoginAndCreateAccountWindows
+    };
+
     var bar;
 
     if(this.props.state.name){
+      // Render this HTML if the user is logged in
       bar = (
       <div className="bar">
         <ul>
-          <li className="mail"          onClick={this.GetMail            }>Mail</li>
-          <li className="notifications" onClick={this.GetNotifications   }>Notifications</li>
+          <li className="mail"          onClick={this.GetMail            }></li>
+          <li className="notifications" onClick={this.GetNotifications   }></li>
           <li                           onClick={this.GetUserControlPanel}>{this.props.state.name}</li>
           <li className="seperator"></li>
           <li                           onClick={this.Logout             }>Sign Out</li>
@@ -167,6 +178,7 @@ class HeaderBar extends React.Component {
       </div>
       );
     }else{
+      // Render this HTML if the user is NOT logged in
       bar = (
       <div className="bar">
         <ul>
@@ -181,8 +193,8 @@ class HeaderBar extends React.Component {
     return(
       <div>
         {bar}
-        <LoginWindow  {...this.props} display={this.state.displayLogin}/>
-        <SignupWindow {...this.props} display={this.state.displayCreateAccount}/>
+        <LoginWindow  {...this.props} {...WindowProps} display={this.state.displayLogin}/>
+        <SignupWindow {...this.props} {...WindowProps} display={this.state.displayCreateAccount}/>
       </div>
     );
   }
@@ -194,7 +206,8 @@ class LoginWindow extends React.Component {
      QueryIndex = Application.QueryIndex
      SetName    = Application.SetName
      Logout     = Application.Logout
-     display    = HeaderBar.state.displayLogin */
+     display    = HeaderBar.state.displayLogin
+     HideLoginAndCreateAccountWindows = HeaderBar.HideLoginAndCreateAccountWindows */
 
   constructor(props){
     super(props);
@@ -216,8 +229,12 @@ class LoginWindow extends React.Component {
 
     post("/api/login", postData)
     .then(res => {
-      Cookie.set("token", res.token);
-      this.props.QueryIndex();
+      if(res.err === 0){
+        Cookie.set("token", res.token);
+        this.props.HideLoginAndCreateAccountWindows();
+        this.props.QueryIndex();
+      }else
+        alert(res.msg);
     });
   }
 
@@ -250,7 +267,8 @@ class SignupWindow extends React.Component {
      QueryIndex = Application.QueryIndex
      SetName    = Application.SetName
      Logout     = Application.Logout
-     display    = HeaderBar.state.displayCreateAccount */
+     display    = HeaderBar.state.displayCreateAccount
+     HideLoginAndCreateAccountWindows = HeaderBar.HideLoginAndCreateAccountWindows */
 
   constructor(props){
     super(props);
@@ -281,9 +299,13 @@ class SignupWindow extends React.Component {
       "captcha" : this.state.captcha
     };
 
-    post("/api/sign-up", postData)
+    post("/api/create-account", postData)
     .then(res => {
-      console.log(res);
+      if(res.err === 0){
+        this.props.HideLoginAndCreateAccountWindows();
+        alert(res.msg);
+      }else
+        alert(res.msg);
     });
   }
 
