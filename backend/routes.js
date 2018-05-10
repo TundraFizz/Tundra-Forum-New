@@ -102,60 +102,133 @@ app.post("/api/get-boards", function(req, res){
   });
 });
 
-app.post("/api/sign-up", function(req, res){
+app.post("/api/create-account", function(req, res){
   var ip       = req.connection.remoteAddress;
   var post     = req.body;
-  var name     = post["name"];
-  var email    = post["email"];
+  var email    = post["email"].trim();
   var password = post["password"];
   var confirm  = post["confirm"];
+  var name     = post["name"].trim();
   var tou      = post["tou"];
   var captcha  = post["captcha"];
 
-  // Check if name exists
-  // Check if email exists
-  // Check password strength
-  // Check if passwords match
-  // Check if TOU accepted
-  // Check if captcha passed
+  console.log("email   :", email);
+  console.log("password:", password);
+  console.log("confirm :", confirm);
+  console.log("name    :", name);
+  console.log("tou     :", tou);
+  console.log("captcha :", captcha);
 
-  bcrypt.hash(password, 10, function(err, hashedPassword){
-    var sql  = "INSERT INTO users (name, email, password, join_date, last_seen) VALUES (?,?,?,NOW(),NOW())";
-    var args = [name, email, hashedPassword];
+  // ACE = Allowed Characters: Email
+  // a-z
+  // A-Z
+  // À-ÿ All accented characters (diacritics)
+  // 0-9
+  // Period, underscore, dash
+  var ACE        = "[a-zA-ZÀ-ÿ0-9._-]*";
+  ACE            = `${ACE}@${ACE}\\.${ACE}[^.]$`;
+  var regexEmail = RegExp(ACE, "g");
+
+  // ACN = Allowed Characters: Name
+  // a-z
+  // A-Z
+  // À-ÿ All accented characters (diacritics)
+  // 0-9
+  // Space, period, underscore, dash
+  var ACN = "[a-zA-ZÀ-ÿ0-9 ._-]*";
+  var regexName = RegExp(ACN, "g");
+
+  // Validate these:
+  // - Email
+  // - Display Name
+  // - Passwords matching
+  // - Password strength
+  // - TOU
+  // - Captcha
+
+  if(email.match(regexEmail) === null || email.match(regexEmail)[0] != email){
+    res.json({"msg": "Bad email!", "err": 1});
+    return;
+  }else if(name.match(regexName) === null || name.match(regexName)[0] != name){
+    res.json({"msg": "Bad display name!", "err": 1});
+    return;
+  }else if(false){
+    res.json({"msg": "Password isn't strong enough", "err": 1});
+    return;
+  }else if(false){
+    res.json({"msg": "Passwords don't match", "err": 1});
+    return;
+  }else if(false){
+    res.json({"msg": "Terms of use wasn't accepted", "err": 1});
+    return;
+  }else if(false){
+    res.json({"msg": "Captcha wasn't solved", "err": 1});
+    return;
+  }
+
+  // All validations have succeeded
+
+  var sql  = "SELECT id FROM users WHERE email=?";
+  var args = [email];
+
+  con.query(sql, args, function(err, rows){
+    if(rows.length){
+      res.json({"msg": "That email is already in use", "err": 1});
+      return;
+    }
+
+    var sql  = "SELECT id FROM users WHERE name=?";
+    var args = [name];
 
     con.query(sql, args, function(err, rows){
-      if(err){
-        res.json({"msg": err, "err": 1});
+      if(rows.length){
+        res.json({"msg": "That name is already in use", "err": 1});
         return;
       }
 
-      var user_id = rows.insertId;
-
-      // Generate a token for verification after the user was created
-      GenerateToken(16)
-      .then((token) => {
-        var sql  = "INSERT INTO tokens (users_id, purpose, ip_address, token) VALUES (?,?,?,?)";
-        var args = [user_id, PURPOSE_NEW_ACCOUNT, ip, token];
+      bcrypt.hash(password, 10, function(err, hashedPassword){
+        var sql  = "INSERT INTO users (name, email, password, join_date, last_seen) VALUES (?,?,?,NOW(),NOW())";
+        var args = [name, email, hashedPassword];
 
         con.query(sql, args, function(err, rows){
-          // var transporter = emailer.createTransport({
-          //   service: "gmail",
-          //   auth: {
-          //     user: "fizz.gg.site@gmail.com",
-          //     pass: "aaaaaaaaaaaaaaaaaaaa"
-          //   }
-          // });
+          if(err){
+            res.json({"msg": err, "err": 1});
+            return;
+          }
 
-          // var mailOptions = {
-          //   "from"   : "fizz.gg.site@gmail.com",
-          //   "to"     : email,
-          //   "subject": "Your verification code for fizz.gg",
-          //   "text"   : `https://fizz.gg/verify?token=${token}`
-          // };
+          var user_id = rows.insertId;
 
-          // transporter.sendMail(mailOptions, function(error, info){
-          //   res.json({"msg":"User created", "err":"false"});
-          // });
+          // Generate a token for verification after the user was created
+          GenerateToken(16)
+          .then((token) => {
+            var sql  = "INSERT INTO tokens (users_id, purpose, ip_address, token) VALUES (?,?,?,?)";
+            var args = [user_id, PURPOSE_NEW_ACCOUNT, ip, token];
+
+            con.query(sql, args, function(err, rows){
+
+              res.json({"msg": "Account created! You may now log in", "err": 0});
+              return;
+
+              // var transporter = emailer.createTransport({
+              //   service: "gmail",
+              //   auth: {
+              //     user: "fizz.gg.site@gmail.com",
+              //     pass: "aaaaaaaaaaaaaaaaaaaa"
+              //   }
+              // });
+
+              // var mailOptions = {
+              //   "from"   : "fizz.gg.site@gmail.com",
+              //   "to"     : email,
+              //   "subject": "Your verification code for fizz.gg",
+              //   "text"   : `https://fizz.gg/verify?token=${token}`
+              // };
+
+              // transporter.sendMail(mailOptions, function(error, info){
+              //   res.json({"msg":"User created", "err":"false"});
+              // });
+            });
+          });
         });
       });
     });
@@ -169,7 +242,7 @@ app.post("/api/login", function(req, res){
   var password = post["password"];
 
   // Pull the hash from the database
-  var sql  = "SELECT id, name, password FROM users WHERE email=?";
+  var sql  = "SELECT id, password FROM users WHERE email=?";
   var args = [email];
 
   con.query(sql, args, function(err, rows){
@@ -180,7 +253,6 @@ app.post("/api/login", function(req, res){
       res.json({"msg":"Incorrect email/password", "err": 1});
     }else{
       var users_id       = rows[0]["id"];
-      var name           = rows[0]["name"];
       var hashedPassword = rows[0]["password"];
 
       bcrypt.compare(password, hashedPassword, function(err, res2){
@@ -191,7 +263,7 @@ app.post("/api/login", function(req, res){
             var args = [users_id, PURPOSE_LOGGED_IN, ip, token];
 
             con.query(sql, args, function(err, rows){
-              res.json({"msg": "Logged in", "token": token, "name": name, "err": 0});
+              res.json({"msg": "Logged in", "token": token, "err": 0});
             });
           });
         }else{
