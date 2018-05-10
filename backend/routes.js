@@ -18,12 +18,17 @@ var con = mysql.createConnection({
 });
 
 GetUser = function(token){return new Promise((resolve) => {
+  var data = {
+    "name"      : null,
+    "permission": 0
+  };
+
   if(!token){
-    resolve(0);
+    resolve(data);
     return;
   }else{
     var sql = `
-    SELECT u.permission FROM users u
+    SELECT u.name, u.permission FROM users u
     JOIN tokens t on t.users_id=u.id
     WHERE t.token=?`;
     var args = [token];
@@ -31,10 +36,12 @@ GetUser = function(token){return new Promise((resolve) => {
     con.query(sql, args, function(err, rows){
       if(rows.length == 0){
         // If the user gave us a token that doesn't exist in the database
-        resolve(0);
+        resolve(data);
         return;
       }else{
-        resolve(rows[0]["permission"]);
+        data["name"]       = rows[0]["name"];
+        data["permission"] = rows[0]["permission"];
+        resolve(data);
         return;
       }
     });
@@ -44,7 +51,6 @@ GetUser = function(token){return new Promise((resolve) => {
 GenerateToken = function(length){return new Promise((resolve) => {
   GenerateTokenHelper = function(length){return new Promise((resolve) => {
     if(length % 4){
-      console.log("ERROR! GenerateToken must be a multiple of four");
       resolve("DEAD");
       return;
     }
@@ -81,12 +87,17 @@ GenerateToken = function(length){return new Promise((resolve) => {
 
 app.post("/api/get-boards", function(req, res){
   GetUser(req.body["token"])
-  .then((permission) => {
-    console.log("PERMISSION LEVEL IS:", permission);
+  .then(vals => {
+    var name       = vals.name;
+    var permission = vals.permission;
+
     var sql  = "SELECT id, name, description, thread_count, post_count, icon FROM boards WHERE permission <= ?";
     var args = [permission];
     con.query(sql, args, function(err, rows){
-      res.json(rows);
+      res.json({
+        "boards": rows,
+        "name"  : name
+      });
     });
   });
 });
@@ -127,9 +138,6 @@ app.post("/api/sign-up", function(req, res){
         var args = [user_id, PURPOSE_NEW_ACCOUNT, ip, token];
 
         con.query(sql, args, function(err, rows){
-          console.log("========== TOKEN ==========");
-          console.log(token);
-
           // var transporter = emailer.createTransport({
           //   service: "gmail",
           //   auth: {
@@ -161,7 +169,7 @@ app.post("/api/login", function(req, res){
   var password = post["password"];
 
   // Pull the hash from the database
-  var sql  = "SELECT id, password FROM users WHERE email=?";
+  var sql  = "SELECT id, name, password FROM users WHERE email=?";
   var args = [email];
 
   con.query(sql, args, function(err, rows){
@@ -171,8 +179,9 @@ app.post("/api/login", function(req, res){
     else if(rows.length == 0){
       res.json({"msg":"Incorrect email/password", "err": 1});
     }else{
-      var hashedPassword = rows[0]["password"];
       var users_id       = rows[0]["id"];
+      var name           = rows[0]["name"];
+      var hashedPassword = rows[0]["password"];
 
       bcrypt.compare(password, hashedPassword, function(err, res2){
         if(res2){
@@ -182,7 +191,7 @@ app.post("/api/login", function(req, res){
             var args = [users_id, PURPOSE_LOGGED_IN, ip, token];
 
             con.query(sql, args, function(err, rows){
-              res.json({"msg": "Logged in", "token": token, "err": 0});
+              res.json({"msg": "Logged in", "token": token, "name": name, "err": 0});
             });
           });
         }else{
@@ -202,9 +211,7 @@ app.post("/api/logout", function(req, res){
   var args = [token];
 
   con.query(sql, args, function(err, rows){
-    console.log(rows);
     if(err){
-      console.log(err);
       res.json({"msg": err, "err": 1});
     }else{
       res.json({"msg":"You've been logged out", "err": 0});
