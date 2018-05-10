@@ -86,6 +86,7 @@ a:hover {
 
     ul {
       display: inline-block;
+      height: 100%;
       margin: 0;
       padding: 0;
 
@@ -100,12 +101,23 @@ a:hover {
       }
 
       li.mail {
-        padding-right: 8px;
+        height: 100%;
+        width: 22px;
+        position: relative;
+        background-repeat: no-repeat;
+        background-size: contain;
+        margin-right: 8px;
         background-image: url(img/icon-mail-1.png);
       }
 
       li.notifications {
-        padding-right: 8px;
+        height: 100%;
+        width: 22px;
+        position: relative;
+        background-repeat: no-repeat;
+        background-size: contain;
+        margin-right: 8px;
+        background-image: url(img/icon-notifications-1.png);
       }
 
       li.seperator {
