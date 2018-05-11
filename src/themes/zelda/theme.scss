@@ -84,50 +84,66 @@ a:hover {
     font-size: 12px;
     font-weight: bold;
 
-    ul {
-      display: inline-block;
-      height: 100%;
-      margin: 0;
-      padding: 0;
+    div {
+      display: table-cell;
+    }
 
-      li {
-        display: inline-block;
-        /*padding-right: 4px;*/
-      }
+    :not(.seperator):hover {
+      color: #ffffff;
+      cursor: pointer;
+    }
 
-      li:not(.seperator):hover {
-        color: #ffffff;
-        cursor: pointer;
-      }
+    .mail {
+      border-left: 0;
+      border-top: 0;
+      border-bottom: 0;
+      border-right: 10px solid transparent;
+      background-repeat: no-repeat;
+      background-position: center;
+      width: 26px;
+      background-size: contain;
+      background-image: url(img/icon-mail-1.png);
+    }
 
-      li.mail {
-        height: 100%;
-        width: 22px;
-        position: relative;
-        background-repeat: no-repeat;
-        background-size: contain;
-        margin-right: 8px;
-        background-image: url(img/icon-mail-1.png);
-      }
+    .mail:hover {
+      background-image: url(img/icon-mail-2.png);
+    }
 
-      li.notifications {
-        height: 100%;
-        width: 22px;
-        position: relative;
-        background-repeat: no-repeat;
-        background-size: contain;
-        margin-right: 8px;
-        background-image: url(img/icon-notifications-1.png);
-      }
+    .mail[active] {
+      background-image: url(img/icon-mail-3.png);
+    }
 
-      li.seperator {
-        cursor: default;
-        padding: 0 8px;
-      }
+    .notifications {
+      border-left: 0;
+      border-top: 0;
+      border-bottom: 0;
+      border-right: 10px solid transparent;
+      background-repeat: no-repeat;
+      background-position: center;
+      width: 26px;
+      background-size: contain;
+      background-image: url(img/icon-notifications-1.png);
+    }
 
-      li.seperator:after {
-        content: "|";
-      }
+    .notifications:hover {
+      background-image: url(img/icon-notifications-2.png);
+    }
+
+    .notifications[active] {
+      background-image: url(img/icon-notifications-3.png);
+    }
+
+    .text {
+      padding-right: 10px;
+    }
+
+    .seperator {
+      cursor: default;
+      padding-right: 10px;
+    }
+
+    .seperator:after {
+      content: "|";
     }
   }
 
