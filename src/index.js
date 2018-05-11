@@ -84,7 +84,15 @@ class Application extends React.Component {
         <div className="nav-bar-trim"/>
         <div className="triangles"/>
 
-        <MainForum boards={this.state.boards}/>
+
+        <BrowserRouter>
+          <div>
+            <Route exact path="/" render={() => <MainForum boards={this.state.boards}/>} />
+          </div>
+        </BrowserRouter>
+
+        {/* <MainForum boards={this.state.boards}/> */}
+
       </div>
     );
     }
@@ -168,24 +176,20 @@ class HeaderBar extends React.Component {
       // Render this HTML if the user is logged in
       bar = (
       <div className="bar">
-        <ul>
-          <li className="mail"          onClick={this.GetMail            }></li>
-          <li className="notifications" onClick={this.GetNotifications   }></li>
-          <li                           onClick={this.GetUserControlPanel}>{this.props.state.name}</li>
-          <li className="seperator"></li>
-          <li                           onClick={this.Logout             }>Sign Out</li>
-        </ul>
+        <div className="mail"          onClick={this.GetMail            }></div>
+        <div className="notifications" onClick={this.GetNotifications   }></div>
+        <div className="text"          onClick={this.GetUserControlPanel}>{this.props.state.name}</div>
+        <div className="seperator"></div>
+        <div                           onClick={this.Logout             }>Sign Out</div>
       </div>
       );
     }else{
       // Render this HTML if the user is NOT logged in
       bar = (
       <div className="bar">
-        <ul>
-          <li onClick={this.ShowLoginWindow}>Login</li>
-          <li className="seperator"></li>
-          <li onClick={this.ShowCreateAccountWindow}>Create Account</li>
-        </ul>
+        <div className="text" onClick={this.ShowLoginWindow}>Login</div>
+        <div className="seperator"></div>
+        <div onClick={this.ShowCreateAccountWindow}>Create Account</div>
       </div>
       );
     }
@@ -371,7 +375,7 @@ class NavBarMenu extends React.Component {
 }
 
 class MainForum extends React.Component {
-  RenderBoards(){
+  RenderBoards = () => {
     return this.props.boards.map((obj, i) =>
       <div className="board" key={i}>
         <div className="icon">
